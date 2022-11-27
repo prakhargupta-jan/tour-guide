@@ -11,6 +11,28 @@ const getToken = (id) =>
 		expiresIn: process.env.JWT_EXPIRES_IN,
 	})
 
+const createSendToken = (user, statusCode, res) => {
+	const token = getToken(user._id);
+	let cookieOptions = {
+		expires: new Date(Date.now() + 90*24*60*60*1000),
+		httpOnly: true
+	}
+	
+	if (process.env.NODE_ENV == 'prod')
+		cookieOptions.secure = true;
+	
+	res.cookie('jwt', token, cookieOptions)
+	user.password = undefined;
+
+	res.status(statusCode).json({
+		status: 'success',
+		token,
+		data: {
+			user
+		}
+	})
+}
+
 // Login
 exports.login = catchAsync(async (req, res, next) => {
 	if (!(req.body.email && req.body.password))
@@ -23,25 +45,13 @@ exports.login = catchAsync(async (req, res, next) => {
 		return next(
 			new AppError("Please provide correct email and password", 401)
 		)
-	const token = getToken(user._id)
-
-	res.status(200).json({
-		status: "success",
-		token,
-	})
+	createSendToken(user, 200, res);
 })
 
 // Sign-up
 exports.signup = catchAsync(async (req, res, next) => {
 	const newUser = await User.create(req.body)
-	const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
-		expiresIn: process.env.JWT_EXPIRES_IN,
-	})
-
-	res.status(201).json({
-		user: newUser,
-		token,
-	})
+	createSendToken(newUser, 200, res);
 })
 
 // Authentication Protection
@@ -148,8 +158,5 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 		return next(new AppError("Please provide correct old password", 401))
 	user.password = req.body.newPassword
 	await req.user.save({ validateBeforeSave: false })
-	res.status(202).json({
-		status: "success",
-		token: getToken(user._id),
-	})
+	createSendToken(user, 200, res);
 })
