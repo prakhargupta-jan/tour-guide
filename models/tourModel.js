@@ -1,5 +1,4 @@
 const { default: mongoose } = require("mongoose");
-
 const tourSchema = mongoose.Schema({
     name: {
         type: String,
@@ -69,7 +68,34 @@ const tourSchema = mongoose.Schema({
         type: Boolean,
         default: false,
         select: false
-    }
+    },
+    startLocation: {
+        type: {
+            type: String,
+            default: 'Point',
+            enum: ['Point']
+        },
+        coordinates: [Number],
+        address: String,
+        description: String
+    },
+    locations: [{       // Don't forget to import dev data
+        type: {
+            type: 'String',
+            default: 'Point',
+            enum: ['Point']
+        },
+        coordinates: [Number],
+        address: String,
+        description: String,
+        day: Number
+    }],
+    guides: [
+        {
+            type: mongoose.Schema.ObjectId,
+            ref: 'User'
+        }
+    ]
 }, {
     toJSON: {virtuals : true},
     toObject: {virtuals : true}
@@ -77,6 +103,13 @@ const tourSchema = mongoose.Schema({
 
 tourSchema.virtual('durationWeeks').get(function() {
     return this.duration/7
+})
+
+// Virtual Populate
+tourSchema.virtual('reviews', {
+    ref: 'Review',
+    foreignField: 'tour',
+    localField: '_id'
 })
 
 tourSchema.pre(/^find/, function(next) {

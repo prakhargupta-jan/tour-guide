@@ -6,7 +6,7 @@ const catchAsync = require('../utils/catchAsync');
 
 
 exports.getAllTours = catchAsync(async (req, res, next) => {
-    const data = await new APIfeatures(Tour.find(), req.query).filter().sort().limit().paginate().findQuery;
+    const data = await new APIfeatures(Tour.find().select('-guides'), req.query).filter().sort().limit().paginate().findQuery;
     res.status(200).json({
         status: 'success',
         length: data.length,
@@ -23,7 +23,7 @@ exports.postTour = catchAsync(async (req, res, next) => {
 })
 
 exports.getTour = catchAsync(async (req, res, next) => {
-    const data = await Tour.findById(req.params.id)
+    const data = await Tour.findById(req.params.id).populate({path: 'guides', select: '-__v -passwordChangedAt'}).populate('reviews')
     if (!data) {
         return next(new AppError('No tour found for this id', 404));
     }

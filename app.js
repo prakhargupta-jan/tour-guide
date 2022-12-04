@@ -10,6 +10,7 @@ const { default: helmet } = require('helmet');
 const ExpressMongoSanitize = require('express-mongo-sanitize');
 const xssClean = require('xss-clean/lib');
 const hpp = require('hpp');
+const reviewRouter = require('./routes/reviewRoutes');
 
 limiter = rateLimit({
     max: 100,
@@ -38,6 +39,7 @@ app.use((req, res, next) => {
 // Routers
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
+app.use('/api/v1/reviews', reviewRouter);
 
 app.all('*', (req, res, next) => {
     next(new AppError('Webpage not found', 404))
